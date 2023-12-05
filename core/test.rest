@@ -1,18 +1,28 @@
-get http://127.0.0.1:8000/accounts
+post http://127.0.0.1:8000/accounts/userprofile
 Content-Type: application/json
-Authorization:Token 59170d73d040c7e9e8c392fbab75d94773a4db20
+Authorization:Token eb901c282396976b8ea1e9c751247474b07932ab
+
+{"name": "Mayowa Yusuf", "bio": "Programmer", "category": "Baller", "subcategory": "Adebola"}
+
+
+###
+put http://127.0.0.1:8000/accounts/userprofile/admin
+Content-Type: application/json
+Authorization:Token eb901c282396976b8ea1e9c751247474b07932ab
+
+{"name": "MayowaYusu", "bio": "Programer", "category": "Baller", "subcategory": "Adebola"}
 
 ###
 post http://127.0.0.1:8000/accounts/signup
 Content-Type: application/json
 
-{"usernae": "medlldd", "password": "okay","confirm_password":"okay",  "email":"mail@gmail.co"}
+{"username": "admin", "password": "Admin3004","confirm_password":"Admin3004",  "email":"mail@gmail.co"}
 
 
 ###
 post http://127.0.0.1:8000/accounts/login
 Content-Type: application/json
 
-{"username": "medlldd", "password": "okay","confirm_password":"okay",  "email":"mail@gmail.co"}
+{"username": "admin", "password": "Admin3004","confirm_password":"okay",  "email":"mail@gmail.co"}
 
 
