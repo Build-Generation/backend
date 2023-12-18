@@ -1,0 +1,54 @@
+// Signup Endpoint
+# This endpoint is responsible for creating accounts.
+# It can only accept POST request
+# All the are required
+# A token is returned after a successful account creation
+
+# This should be a two step process - email verification, and it will be updated soon.
+
+
+post https://linkproject.pythonanywhere.com/accounts/signup
+Content-Type: application/json
+
+{"username": "admin", "password": "Admin3004","confirm_password":"Admin3004",  "email":"mail@gmail.co"}
+
+
+###
+// Login Endpoint
+# This endpoint allows users to login into their account.
+# It accepts only POST request
+# email and password are required fields
+# A token is returned after a successful login
+
+post https://linkproject.pythonanywhere.com/accounts/login
+Content-Type: application/json
+
+{"password": "access",  "email":"admin@gmail.com"}
+
+### 
+// Create user profile
+# Accepts only POST request to create the user's profile
+# The user's token must be passed with the headers, so no one can create user profile for anyone else
+
+post https://linkproject.pythonanywhere.com/accounts/userprofile
+Content-Type: application/json
+Authorization:Token 14aa4e8302e52638ef8c990d3430f09a5210a07b
+
+{"name": "Mayowa Yusuf", "bio": "Programmer", "category": "Baller", "subcategory": "Adebola"}
+
+
+### 
+//  Read and Update User Profile
+# This can take get, put methods
+# Anybody can view anybody's profile
+# Only a user can update his/her profile - so the token must be provided for a put method
+# in the /access - access is the username of this specific user.
+
+
+get https://linkproject.pythonanywhere.com/accounts/userprofile/access
+Content-Type: application/json
+Authorization:Token 14aa4e8302e52638ef8c990d3430f09a5210a07b
+
+{"name": "Mayowa Yusuf", "bio": "Programer", "category": "Baller", "sub_category": "mechanic"}
+
+
