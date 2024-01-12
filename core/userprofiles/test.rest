@@ -1,0 +1,66 @@
+// Signup Endpoint
+# This endpoint is responsible for creating accounts.
+# It can only accept POST request
+# All the are required
+# A token is returned after a successful account creation
+
+# This should be a two step process - email verification, and it will be updated soon.
+
+
+post http://127.0.0.1:8000/accounts/signup
+Content-Type: application/json
+
+{"username": "meee", "password": "Npoje@cct","confirm_password":"Npoje@cct",  "email":"nejwbnmt@gmail.co"}
+
+
+###
+// Login Endpoint
+# This endpoint allows users to login into their account.
+# It accepts only POST request
+# email and password are required fields
+# A token is returned after a successful login
+
+post http://127.0.0.1:8000/accounts/login
+Content-Type: application/json
+
+{"password": "Npoje@cct",  "email":"nejwbnmt@gmail.co"}
+
+### 
+// Create user profile
+# Accepts only POST request to create the user's profile
+# The user's token must be passed with the headers, so no one can create user profile for anyone else
+
+post http://127.0.0.1:8000/accounts/userprofile
+Content-Type: application/json
+Authorization:Token 785935378b671d89916b47f443f5e40220267463
+
+{"name": "Mayowa Yusuf", "bio": "Programmer", "category": "Baller", "subcategory": "Adebola"}
+
+
+### 
+//  Read and Update User Profile
+# This can take get, put methods
+# Anybody can view anybody's profile
+# Only a user can update his/her profile - so the token must be provided for a put method
+# in the /access - access is the username of this specific user.
+
+
+
+put http://127.0.0.1:8000/accounts/userprofile/admin
+Content-Type: application/json
+Authorization:Token eb901c282396976b8ea1e9c751247474b07932ab
+
+{
+    "name": "MayowaYusuf",
+    "bio": "Programmer",
+    "category": "Baller",
+    "sub_category": "mechanic",
+    "bio_title": "Me against the world",
+    "id": "100",
+    "links": {
+        "twitter": "@Craennie",
+        "instagram": "@MayowaYusuf",
+        "linkedin": "MayowaYusuf"
+    },
+    "header": "Newst guy"
+}

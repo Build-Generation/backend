@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import *
 from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.models import User
 from .serializers import *
 from rest_framework import status
@@ -34,23 +35,34 @@ class SignUpView(GenericAPIView):
             
             user = serializer.save()
             token = Token.objects.get(user=user)
-            return Response({'token': token.key}, status=status.HTTP_201_CREATED)
+            user_profile = UserProfile.objects.create(user = user)
+            user_profile.save()
+            return Response({
+                'token': token.key,
+                "data": serializer.data
+            }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(GenericAPIView):
+    
     def post(self, request):
         user = get_object_or_404(User, email = request.data["email"])
 
+        
         if user.check_password(request.data['password']):
-            token, create_token = Token.objects.get_or_create(user)
+            
+            token, create_token = Token.objects.get_or_create(user = user.pk)
+            
 
             if token:
                 return Response({
-                    "token": token.key
+                    "token": token.key,
+                    "details": "user's credentials were correct"
                 }, status = status.HTTP_200_OK)
             elif create_token:
                 return Response({
-                    "token": create_token.key
+                    "token": create_token.key,
+                    "details": "user's credentials were correct"
                 }, status = status.HTTP_200_OK)
             else:
                 return Response({
@@ -61,29 +73,6 @@ class LoginView(GenericAPIView):
                 "error": "credentials don't match!"
             }, status = status.HTTP_401_UNAUTHORIZED)
 
-
-class CreateUserProfileView(GenericAPIView):
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
-    queryset = UserProfile
-    serializer_class = UserProfileSerializer
-
-    def post(self, request, *args, **kwargs):
-        # Check if profile exists to avoid duplicates
-        if UserProfile.objects.filter(user = request.user.pk).exists():
-            return Response({
-                "error": "user with this username already exists"
-            }, status = status.HTTP_400_BAD_REQUEST)
-        request.data["user"] = request.user.pk
-        serializer = self.serializer_class(data = request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                "status": status.HTTP_201_CREATED,
-                "data": request.data,
-                "detail": "User Profile created successfully!"
-            })
-        else:
-            return Response(serializer.errors)
         
 class GetUpdateUserProfileView(RetrieveUpdateAPIView):
     authentication_classes = [SessionAuthentication, TokenAuthentication]
@@ -98,20 +87,25 @@ class GetUpdateUserProfileView(RetrieveUpdateAPIView):
 
     def put(self, request, user, *args, **kwargs):
         profile_owner = get_object_or_404(User, username = user)
-        print()
         if request.user.pk  is not profile_owner.pk:
             return Response({"details": "unauthorized"}, status = status.HTTP_401_UNAUTHORIZED)
         request.data["user"] = request.user.pk
         user_profile = UserProfile.objects.get( user=profile_owner)
         serializer = self.serializer_class(user_profile, data = request.data)
+        if "links" in request.data:
+            if len(request.data["links"]) > 7:
+                return Response("You can only add up to seven links.",status = status.HTTP_400_BAD_REQUEST)
+                
+
         if serializer.is_valid():
             serializer.save()
             return Response({
+
                 "status": status.HTTP_202_ACCEPTED,
-                "data": request.data,
+                "data": serializer.data,
                 "detail": "User Profile updated successfully!"
             })
-        else:
+        else: 
             return Response(serializer.errors)
 
 

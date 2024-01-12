@@ -6,6 +6,5 @@ urlpatterns = [
     path("", TestApi.as_view(), name  = "test"),
     path("signup", SignUpView.as_view(), name = "signup"),
     path("login", LoginView.as_view(), name = "login"),
-    path("userprofile", CreateUserProfileView.as_view(), name = "userprofile"),
     path("userprofile/<str:user>", GetUpdateUserProfileView.as_view(), name = "userprofile-actions")
 ]

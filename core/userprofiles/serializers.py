@@ -34,6 +34,7 @@ class UserSerializer(ModelSerializer):
         return user
     
 class UserProfileSerializer(ModelSerializer):
+    profile_pic = serializers.ImageField(required=False)
     class Meta:
         model = UserProfile
-        fields = "__all__"
+        fields = ("__all__" )
