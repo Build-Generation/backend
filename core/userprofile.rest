@@ -5,12 +5,12 @@
 # A token is returned after a successful account creation
 
 # This should be a two step process - email verification, and it will be updated soon.
-
+# After signup, the user's profile is created too.
 
 post https://linkproject.pythonanywhere.com/accounts/signup
 Content-Type: application/json
 
-{"username": "admin", "password": "Admin3004","confirm_password":"Admin3004",  "email":"mail@gmail.co"}
+{"username": "meee", "password": "Npoje@cct","confirm_password":"Npoje@cct",  "email":"nejwbnmt@gmail.co"}
 
 
 ###
@@ -23,19 +23,7 @@ Content-Type: application/json
 post https://linkproject.pythonanywhere.com/accounts/login
 Content-Type: application/json
 
-{"password": "access",  "email":"admin@gmail.com"}
-
-### 
-// Create user profile
-# Accepts only POST request to create the user's profile
-# The user's token must be passed with the headers, so no one can create user profile for anyone else
-
-post https://linkproject.pythonanywhere.com/accounts/userprofile
-Content-Type: application/json
-Authorization:Token 14aa4e8302e52638ef8c990d3430f09a5210a07b
-
-{"name": "Mayowa Yusuf", "bio": "Programmer", "category": "Baller", "subcategory": "Adebola"}
-
+{"password": "Npoje@cct",  "email":"nejwbnmt@gmail.co"}
 
 ### 
 //  Read and Update User Profile
@@ -45,10 +33,22 @@ Authorization:Token 14aa4e8302e52638ef8c990d3430f09a5210a07b
 # in the /access - access is the username of this specific user.
 
 
-get https://linkproject.pythonanywhere.com/accounts/userprofile/access
+
+put https://linkproject.pythonanywhere.com/accounts/userprofile/admin
 Content-Type: application/json
-Authorization:Token 14aa4e8302e52638ef8c990d3430f09a5210a07b
+Authorization:Token eb901c282396976b8ea1e9c751247474b07932ab
 
-{"name": "Mayowa Yusuf", "bio": "Programer", "category": "Baller", "sub_category": "mechanic"}
-
-
+{
+    "name": "MayowaYusuf",
+    "bio": "Programmer",
+    "category": "Baller",
+    "sub_category": "mechanic",
+    "bio_title": "Me against the world",
+    "id": "100",
+    "links": {
+        "twitter": "@Craennie",
+        "instagram": "@MayowaYusuf",
+        "linkedin": "MayowaYusuf"
+    },
+    "header": "Newst guy"
+}
