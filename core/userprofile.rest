@@ -1,8 +1,6 @@
 // Signup Endpoint
 # This endpoint is responsible for creating accounts.
 # It can only accept POST request
-# All the are required
-# A token is returned after a successful account creation
 
 # This should be a two step process - email verification, and it will be updated soon.
 # After signup, the user's profile is created too.
@@ -10,7 +8,7 @@
 post https://linkproject.pythonanywhere.com/accounts/signup
 Content-Type: application/json
 
-{"username": "meee", "password": "Npoje@cct","confirm_password":"Npoje@cct",  "email":"nejwbnmt@gmail.co"}
+{"username": "meee", "password": "Npoje@cct", "email":"nejwbnmt@gmail.co"}
 
 
 ###
@@ -18,12 +16,13 @@ Content-Type: application/json
 # This endpoint allows users to login into their account.
 # It accepts only POST request
 # email and password are required fields
-# A token is returned after a successful login
+
+# the cookies is saved on the frontend after a successful login automatically
 
 post https://linkproject.pythonanywhere.com/accounts/login
 Content-Type: application/json
 
-{"password": "Npoje@cct",  "email":"nejwbnmt@gmail.co"}
+{"password": "mypasword",  "email":"mayowa@gmail.com"}
 
 ### 
 //  Read and Update User Profile
@@ -32,11 +31,10 @@ Content-Type: application/json
 # Only a user can update his/her profile - so the token must be provided for a put method
 # in the /access - access is the username of this specific user.
 
-
+# In this case, admin is the current user
 
 put https://linkproject.pythonanywhere.com/accounts/userprofile/admin
 Content-Type: application/json
-Authorization:Token eb901c282396976b8ea1e9c751247474b07932ab
 
 {
     "name": "MayowaYusuf",
@@ -50,5 +48,12 @@ Authorization:Token eb901c282396976b8ea1e9c751247474b07932ab
         "instagram": "@MayowaYusuf",
         "linkedin": "MayowaYusuf"
     },
-    "header": "Newst guy"
+    "header": "Newst guy",
+    "profile_pic": <insert image>,
+    
 }
+
+// To test if user is online
+###
+get https://linkproject.pythonanywhere.com/accounts
+Content-Type: application/json
