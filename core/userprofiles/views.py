@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.response import Response
-from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import *
 from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -8,88 +8,97 @@ from django.contrib.auth.models import User
 from .serializers import *
 from rest_framework import status
 from .models import *
+import jwt, datetime
 
 # Create your views here.
 
 class TestApi(GenericAPIView):
-    permission_classes = [IsAuthenticated]
-    authentication_classes = [TokenAuthentication, SessionAuthentication]
-
     def get(self, request, *args, **kwargs):
-        
-        return Response({
-            "detail": "User is authenticted!"
-        })
+        token = request.COOKIES.get("jwt")
 
+        if not token:
+            raise AuthenticationFailed("Unauthenticated!")
+        
+        try:
+            payload = jwt.decode(token, "secret", algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed("Unauthenticated!")
+        return Response({
+            "detail": "User is authenticated!"
+        })
 
 class SignUpView(GenericAPIView):
     def post(self, request):
-        
-        if request.data["password"] != request.data["confirm_password"]:
-            return Response({
-                "error":"Password and confirm password does not match"},
-                status=status.HTTP_400_BAD_REQUEST)
-        serializer = UserSerializer(data=request.data)
+        serializer = UserSerializer(data = request.data)
+        serializer.is_valid(raise_exception = True)
+        user = serializer.save()
+        user_profile = UserProfile.objects.create(user = user)
+        user_profile.save()
 
-        if serializer.is_valid():
-            
-            user = serializer.save()
-            token = Token.objects.get(user=user)
-            user_profile = UserProfile.objects.create(user = user)
-            user_profile.save()
-            return Response({
-                'token': token.key,
-                "data": serializer.data
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data)
 
 class LoginView(GenericAPIView):
-    
     def post(self, request):
-        user = get_object_or_404(User, email = request.data["email"])
+        email = request.data["email"]
+        password = request.data["password"]
 
+        user = User.objects.filter(email  = email).first()
+
+        if user is None:
+            raise AuthenticationFailed("User not found!")
         
-        if user.check_password(request.data['password']):
-            
-            token, create_token = Token.objects.get_or_create(user = user.pk)
-            
+        if not user.check_password(password):
+            raise AuthenticationFailed("Incorrect Password")
+    
+        payload = {
+            "id" : user.id ,
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes = 60),
+            "iat": datetime.datetime.utcnow()
+        }
+        token = jwt.encode(payload, "secret", algorithm="HS256")
 
-            if token:
-                return Response({
-                    "token": token.key,
-                    "details": "user's credentials were correct"
-                }, status = status.HTTP_200_OK)
-            elif create_token:
-                return Response({
-                    "token": create_token.key,
-                    "details": "user's credentials were correct"
-                }, status = status.HTTP_200_OK)
-            else:
-                return Response({
-                    "error": "couldn't complete this action"
-                }, status = status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({
-                "error": "credentials don't match!"
-            }, status = status.HTTP_401_UNAUTHORIZED)
+        response = Response()
+
+        response.set_cookie(key = "jwt", value = token, httponly=True)
+        response.data =  {
+            "detail": "logged in"
+        }
+
+        return response
 
         
 class GetUpdateUserProfileView(RetrieveUpdateAPIView):
-    authentication_classes = [SessionAuthentication, TokenAuthentication]
-    permission_classes = [IsAuthenticatedOrReadOnly]
     serializer_class = UserProfileSerializer
 
-    def get(self, request, user, *args, **kwargs):
-        profile_owner = get_object_or_404(User, username = user)
+    def get(self, request, current_profile, *args, **kwargs):
+
+        profile_owner = get_object_or_404(User, username = current_profile)
         serializer = self.serializer_class(UserProfile.objects.get(user = profile_owner))
 
         return Response(serializer.data, status = status.HTTP_200_OK)
 
-    def put(self, request, user, *args, **kwargs):
+    def put(self, request, current_profile, *args, **kwargs):
+
+        token = request.COOKIES.get("jwt")
+
+        if not token:
+            raise AuthenticationFailed("Unauthenticated!")
+        
+        try:
+            payload = jwt.decode(token, "secret", algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            raise AuthenticationFailed("Unauthenticated!")
+        
+        user = get_object_or_404(User, id = payload["id"])
+
         profile_owner = get_object_or_404(User, username = user)
-        if request.user.pk  is not profile_owner.pk:
+
+        current_profile = get_object_or_404(User, username = current_profile)
+
+        if current_profile.pk  is not profile_owner.pk:
             return Response({"details": "unauthorized"}, status = status.HTTP_401_UNAUTHORIZED)
-        request.data["user"] = request.user.pk
+        
+        request.data["user"] = profile_owner.pk
         user_profile = UserProfile.objects.get( user=profile_owner)
         serializer = self.serializer_class(user_profile, data = request.data)
         if "links" in request.data:
@@ -108,6 +117,13 @@ class GetUpdateUserProfileView(RetrieveUpdateAPIView):
         else: 
             return Response(serializer.errors)
 
+class LogoutView(GenericAPIView):
+    def post(self, request):
+        response = Response()
+        response.delete_cookie('jwt')
+        response.data={
+            "message": "success",
+            "details": "logged out!"
+        }
 
-
-
+        return response
