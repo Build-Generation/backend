@@ -1,7 +1,6 @@
 from rest_framework.serializers import ModelSerializer
 from django.contrib.auth.models import User
 from rest_framework.validators import ValidationError
-from rest_framework.authtoken.models import Token
 from rest_framework import serializers
 import re
 from .models import *
@@ -27,14 +26,21 @@ class UserSerializer(ModelSerializer):
         if User.objects.filter(email = value).exists():
             raise ValidationError("An account with that Email already exists!")
         return value
-
+    
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        token, created = Token.objects.get_or_create(user=user)
-        return user
+        password = validated_data.pop("password", None)
+
+        instance = self.Meta.model(**validated_data)
+
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
     
 class UserProfileSerializer(ModelSerializer):
     profile_pic = serializers.ImageField(required=False)
     class Meta:
         model = UserProfile
         fields = ("__all__" )
+
