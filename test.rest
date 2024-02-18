@@ -1,0 +1,74 @@
+// Signup Endpoint
+# This endpoint is responsible for creating accounts.
+# It can only accept POST request
+
+# After signup
+#  1.        the user's profile is created too.
+#  2.        An Email is sent to the user's Email for verification
+
+post https://linkproject.pythonanywhere.com/accounts/signup
+Content-Type: application/json
+
+{"username": "meee", "password": "Npoje@cct", "email":"nejwbnmt@gmail.co"}
+
+
+###
+// Login Endpoint
+# This endpoint allows users to login into their account.
+# It accepts only POST request
+# email and password are required fields
+
+# the cookies is saved on the frontend after a successful login automatically
+# the token is also returned
+
+post https://linkproject.pythonanywhere.com/accounts/login
+Content-Type: application/json
+
+{"password": "mypasword",  "email":"mayowa@gmail.com"}
+
+### 
+//  Read and Update User Profile
+# This can take get, put methods
+# Anybody can view anybody's profile
+# Only a user can update his/her profile - so the token must be provided for a put method
+# in the /access - access is the username of this specific user.
+
+# In this case, admin is the current user
+
+# Please use a FormData for this request, do not use any Content-Type, so the profile_pic can work.
+
+put https://linkproject.pythonanywhere.com/accounts/userprofile/admin
+
+{
+    "name": "MayowaYusuf",
+    "bio": "Programmer",
+    "category": "Baller",
+    "sub_category": "mechanic",
+    "bio_title": "Me against the world",
+    "id": "100",
+    "links": {
+        "twitter": "@Craennie",
+        "instagram": "@MayowaYusuf",
+        "linkedin": "MayowaYusuf"
+    },
+    "header": "Newst guy",
+    "profile_pic": <insert image>,
+    
+}
+
+// To test if user is online
+# Token must be in the Headers - Authorization
+###
+get https://linkproject.pythonanywhere.com/accounts
+Content-Type: application/json
+
+
+// To Verify User
+# After a successful Account Creation, they will be required to verify their account.
+# A Link is sent to their Email for Verification
+# A Get Request has to be sent to this link.
+
+# User has to be authenticated to complete this request!
+###
+get https://linkproject.pythonanywhere.com/accounts/verify-user/93b60b
+Content-Type: application/json
