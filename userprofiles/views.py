@@ -11,7 +11,7 @@ from .models import *
 import jwt, datetime, uuid
 from .utils import get_authenticated_user, send_change_code, send_email
 from django.conf import settings
-
+from datetime import timedelta
 
 # Views
 
@@ -137,68 +137,72 @@ class GetUpdateUserProfileView(RetrieveUpdateAPIView):
     def get(self, request, current_profile, *args, **kwargs):
         user = get_authenticated_user(request)
 
-        profile_owner = get_object_or_404(User, username = current_profile)
+        profile_owner = get_object_or_404(User, username=current_profile)
 
-        user_profile = get_object_or_404(UserProfile, user = profile_owner)
+        user_profile = get_object_or_404(UserProfile, user=profile_owner)
 
-        if user_profile.verified == False:
-
+        # Check if the profile is unverified and created more than 4 days ago
+        if not user_profile.verified and (timezone.now() - user_profile.date_created) > timedelta(days=4):
+            # If the profile owner is checking, return "unverified"
             if user == user_profile.user:
-                code = str(uuid.uuid4()).replace("-", "")[:6]
-                if VerifyUser.objects.filter(user = user).exists() == False:
-                    send_email(email = user.email, code = code, username = user.username )
-                    VerifyUser.objects.create(user = user, code = code).save()
                 return Response({
-                    "detail": "You're currently unverified, check your email",
-                    "status":"unverified",
+                    "detail": "You have to verify your profile.",
+                    "status": "unverified",
                     "data": {
                         "username": user.username,
                         "email": user.email
                     }
-                }, status = status.HTTP_401_UNAUTHORIZED)
-            return Response({
-                "detail": "not found"
-            }, status = status.HTTP_404_NOT_FOUND)
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            # If it's a visitor, return "account not available"
+            else:
+                return Response({
+                    "detail": "Account not available.",
+                }, status=status.HTTP_404_NOT_FOUND)
+
         serializer = self.serializer_class(user_profile)
 
         user_serializer = UserSerializer(profile_owner)
         merged_data = serializer.data.copy()
         merged_data.update(user_serializer.data)
 
-        return Response(merged_data, status = status.HTTP_200_OK)
+        return Response(merged_data, status=status.HTTP_200_OK)
 
-    def put(self, request, current_profile, *args, **kwargs):
+def put(self, request, current_profile, *args, **kwargs):
+    request.data._mutable = True
 
-        request.data._mutable = True
+    user = get_authenticated_user(request)
 
-        user = get_authenticated_user(request)
+    profile_owner = get_object_or_404(User, username=user)
+    current_profile = get_object_or_404(User, username=current_profile)
 
-        profile_owner = get_object_or_404(User, username = user)
+    if current_profile.pk != profile_owner.pk:
+        return Response({"details": "unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        current_profile = get_object_or_404(User, username = current_profile)
+    user_profile = UserProfile.objects.get(user=profile_owner)
 
-        if current_profile.pk  is not profile_owner.pk:
-            return Response({"details": "unauthorized"}, status = status.HTTP_401_UNAUTHORIZED)
-        
-        request.data["user"] = profile_owner.pk
-        user_profile = UserProfile.objects.get( user=profile_owner)
-        serializer = self.serializer_class(user_profile, data=request.data, partial=True)
+    # Check if the profile is unverified and created more than 4 days ago
+    if not user_profile.verified and (timezone.now() - user_profile.date_created) > timedelta(days=4):
+        return Response({
+            "detail": "You have to verify your profile before updating.",
+            "status": "unverified",
+        }, status=status.HTTP_401_UNAUTHORIZED)
 
-        if "links" in request.data:
-            if len(request.data["links"]) > 7:
-                return Response("You can only add up to seven links.",status = status.HTTP_400_BAD_REQUEST)
-                
+    request.data["user"] = profile_owner.pk
+    serializer = self.serializer_class(user_profile, data=request.data, partial=True)
 
-        if serializer.is_valid():
-            serializer.save()
-            user_serializer = UserSerializer(current_profile)
-            merged_data = serializer.data.copy()
-            merged_data.update(user_serializer.data)
-            return Response({
+    if "links" in request.data:
+        if len(request.data["links"]) > 7:
+            return Response("You can only add up to seven links.", status=status.HTTP_400_BAD_REQUEST)
 
-                "status": status.HTTP_202_ACCEPTED,
-                "data": merged_data,
-                "detail": "User Profile updated successfully!"
-            })
-        else: 
-            return Response(serializer.errors)
+    if serializer.is_valid():
+        serializer.save()
+        user_serializer = UserSerializer(current_profile)
+        merged_data = serializer.data.copy()
+        merged_data.update(user_serializer.data)
+        return Response({
+            "status": status.HTTP_202_ACCEPTED,
+            "data": merged_data,
+            "detail": "User Profile updated successfully!"
+        })
+    else:
+        return Response(serializer.errors)

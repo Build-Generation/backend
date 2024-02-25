@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework.validators import ValidationError
 from rest_framework import serializers
 import re
+from django.utils import timezone
 from .models import *
 class UserSerializer(ModelSerializer):
     email = serializers.EmailField(required=True)
@@ -45,3 +46,12 @@ class UserProfileSerializer(ModelSerializer):
         model = UserProfile
         fields = ("__all__" )
 
+    def validate_date_created(self, value):
+        # Calculate the time difference
+        time_difference = timezone.now() - value
+
+        # Check if it's been up to 4 days
+        if time_difference.days > 4:
+            raise serializers.ValidationError("Profile created more than 4 days ago.")
+
+        return value
